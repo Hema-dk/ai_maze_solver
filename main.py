@@ -1,6 +1,7 @@
 import pygame
 import sys
 from collections import deque
+import heapq
 
 pygame.init()
 
@@ -30,7 +31,7 @@ maze = [
 start = (0, 0)
 goal = (9, 9)
 
-# ---------- DRAW FUNCTIONS ----------
+
 
 def draw_grid():
     for row in range(ROWS):
@@ -67,7 +68,8 @@ def draw_path(path):
             (col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         )
 
-# ---------- BFS LOGIC ----------
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def bfs_generator():
     queue = deque([start])
@@ -92,6 +94,41 @@ def bfs_generator():
 
     return parent
 
+def astar_generator():
+    open_set = []
+    heapq.heappush(open_set, (0, start))
+
+    g_score = {start: 0}
+    parent = {}
+    visited = set()
+
+    while open_set:
+        _, current = heapq.heappop(open_set)
+        visited.add(current)
+
+        yield visited, parent, current
+
+        if current == goal:
+            break
+
+        row, col = current
+        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+            r, c = row + dr, col + dc
+            neighbor = (r, c)
+
+            if 0 <= r < ROWS and 0 <= c < COLS:
+                if maze[r][c] == 1:
+                    continue
+
+                tentative_g = g_score[current] + 1
+                if tentative_g < g_score.get(neighbor, float("inf")):
+                    parent[neighbor] = current
+                    g_score[neighbor] = tentative_g
+                    f_score = tentative_g + heuristic(neighbor, goal)
+                    heapq.heappush(open_set, (f_score, neighbor))
+
+    return parent
+
 def reconstruct_path(parent):
     path = []
     node = goal
@@ -103,15 +140,16 @@ def reconstruct_path(parent):
     path.append(start)
     return path[::-1]
 
-# ---------- ANIMATION STATE ----------
+
 
 bfs_steps = bfs_generator()
+#bfs_steps = astar_generator()
 visited = set()
 parent = {}
 final_path = []
 search_done = False
 
-# ---------- GAME LOOP ----------
+
 
 while True:
     for event in pygame.event.get():
