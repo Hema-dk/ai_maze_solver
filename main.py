@@ -2,6 +2,7 @@ import pygame
 import sys
 from collections import deque
 import heapq
+import time
 
 
 pygame.init()
@@ -32,6 +33,9 @@ maze = [
 start = (0, 0)
 goal = (9, 9)
 mode = "BFS"
+start_time = None
+end_time = None
+nodes_explored = 0
 
 
 
@@ -71,22 +75,32 @@ def draw_path(path):
         )
 
 def reset_search():
+    global start_time, nodes_explored, search_done
+    start_time = time.time()
+    nodes_explored = 0
+    search_done = False
+
     if mode == "BFS":
         return bfs_generator(), None
     else:
         return astar_generator(), None
 
 
+
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def bfs_generator():
+    global nodes_explored
+
     queue = deque([start])
     visited = set([start])
     parent = {}
 
     while queue:
         current = queue.popleft()
+        nodes_explored += 1
+
         yield visited, parent, current
 
         if current == goal:
@@ -104,6 +118,7 @@ def bfs_generator():
     return parent
 
 def astar_generator():
+    global nodes_explored
     open_set = []
     heapq.heappush(open_set, (0, start))
 
@@ -112,8 +127,13 @@ def astar_generator():
     visited = set()
 
     while open_set:
+        
+
         _, current = heapq.heappop(open_set)
         visited.add(current)
+
+        nodes_explored += 1
+
 
         yield visited, parent, current
 
@@ -161,6 +181,29 @@ search_done = False
 search_gen, parent = reset_search()
 path = []
 
+def draw_stats():
+    font = pygame.font.SysFont(None, 24)
+    elapsed = 0
+    if start_time is not None and end_time is not None:
+        elapsed = int((end_time - start_time) * 1000)
+
+    text_surface = font.render(
+        f"{mode} | Nodes: {nodes_explored} | Time: {elapsed} ms",
+        True,
+        (0, 0, 0)
+    )
+
+    # HUD background
+    padding = 6
+    bg_rect = text_surface.get_rect(topleft=(10, 10))
+    bg_rect.inflate_ip(padding * 2, padding * 2)
+
+    pygame.draw.rect(screen, (255, 255, 255), bg_rect)
+    pygame.draw.rect(screen, (0, 0, 0), bg_rect, 1)
+
+    screen.blit(text_surface, (10 + padding, 10 + padding))
+
+
 
 while True:
     for event in pygame.event.get():
@@ -190,21 +233,11 @@ while True:
         except StopIteration:
             search_done = True
             final_path = reconstruct_path(parent)
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_b:
-                mode = "BFS"
-                search_gen, parent = reset_search()
-                path = []
-
-            if event.key == pygame.K_a:
-                mode = "ASTAR"
-                search_gen, parent = reset_search()
-                path = []
-
+            end_time = time.time()
     draw_grid()
     draw_visited(visited)
     draw_path(final_path)
+    draw_stats()
 
     pygame.display.update()
     clock.tick(15)
