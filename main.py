@@ -3,6 +3,7 @@ import sys
 from collections import deque
 import heapq
 
+
 pygame.init()
 
 WIDTH, HEIGHT = 600, 600
@@ -30,6 +31,7 @@ maze = [
 
 start = (0, 0)
 goal = (9, 9)
+mode = "BFS"
 
 
 
@@ -67,6 +69,13 @@ def draw_path(path):
             (255, 255, 0),  # yellow
             (col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         )
+
+def reset_search():
+    if mode == "BFS":
+        return bfs_generator(), None
+    else:
+        return astar_generator(), None
+
 
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
@@ -142,13 +151,15 @@ def reconstruct_path(parent):
 
 
 
-bfs_steps = bfs_generator()
-#bfs_steps = astar_generator()
+
+
 visited = set()
 parent = {}
 final_path = []
 search_done = False
 
+search_gen, parent = reset_search()
+path = []
 
 
 while True:
@@ -156,15 +167,40 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_b:
+                mode = "BFS"
+                search_gen, parent = reset_search()
+                visited = set()
+                final_path = []
+                search_done = False
+
+            if event.key == pygame.K_a:
+                mode = "ASTAR"
+                search_gen, parent = reset_search()
+                visited = set()
+                final_path = []
+                search_done = False
 
     screen.fill((255, 255, 255))
 
     if not search_done:
         try:
-            visited, parent, _ = next(bfs_steps)
+            visited, parent, _ = next(search_gen)
         except StopIteration:
             search_done = True
             final_path = reconstruct_path(parent)
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_b:
+                mode = "BFS"
+                search_gen, parent = reset_search()
+                path = []
+
+            if event.key == pygame.K_a:
+                mode = "ASTAR"
+                search_gen, parent = reset_search()
+                path = []
 
     draw_grid()
     draw_visited(visited)
