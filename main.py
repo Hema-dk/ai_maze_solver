@@ -4,7 +4,7 @@ from collections import deque
 import heapq
 import time
 
-# ---------- INIT ----------
+
 pygame.init()
 
 WIDTH, HEIGHT = 600, 600
@@ -16,7 +16,7 @@ pygame.display.set_caption("BFS vs A* Maze Solver")
 
 clock = pygame.time.Clock()
 
-# ---------- MAZE ----------
+
 # 0 = empty, 1 = wall
 maze = [
     [0,0,0,1,0,0,0,0,0,0],
@@ -34,7 +34,7 @@ maze = [
 start = (0, 0)
 goal = (9, 9)
 
-# ---------- GLOBAL STATE ----------
+
 mode = "BFS"
 visited = set()
 parent = {}
@@ -45,7 +45,7 @@ path_length = 0
 start_time = None
 end_time = None
 
-# ---------- DRAWING ----------
+
 def draw_grid():
     for r in range(ROWS):
         for c in range(COLS):
@@ -101,7 +101,7 @@ def draw_stats():
     pygame.draw.rect(screen, (0, 0, 0), bg, 1)
     screen.blit(text, (10 + padding, 10 + padding))
 
-# ---------- SEARCH ----------
+
 def reset_search():
     global visited, parent, final_path, search_done
     global nodes_explored, path_length, start_time, end_time
@@ -190,7 +190,7 @@ def astar_generator():
                     f = temp_g + heuristic(neighbor, goal)
                     heapq.heappush(open_set, (f, neighbor))
 
-# ---------- MAIN LOOP ----------
+
 search_gen = reset_search()
 
 while True:
